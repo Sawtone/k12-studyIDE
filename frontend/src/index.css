@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  background-color: #F9FAFB;
+}
+
+.font-serif {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+.font-mono {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
