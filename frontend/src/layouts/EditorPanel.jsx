@@ -1,4 +1,3 @@
-import React from 'react'
 import { FileText } from 'lucide-react'
 import { ModeToggle } from '../components/ModeToggle'
 import { Editor } from '../features/Editor/Editor'

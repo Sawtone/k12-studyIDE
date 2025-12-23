@@ -1,10 +1,10 @@
-import { TiptapEditor } from './components/TiptapEditor'
-import { WritingEditor } from './components/WritingEditor'
+import { WritingMode } from './WritingMode.jsx'
+import { IDEMode } from './IDEMode.jsx'
 
 export const Editor = ({ isIDEMode, content, setContent }) => {
-  if (!isIDEMode) {
-    return <WritingEditor content={content} onChange={setContent} />
+  if (isIDEMode) {
+    return <IDEMode content={content} onContentChange={setContent} />
   }
-
-  return <TiptapEditor content={content} onChange={setContent} isIDEMode={isIDEMode} />
+  
+  return <WritingMode content={content} onContentChange={setContent} />
 }

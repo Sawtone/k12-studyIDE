@@ -60,17 +60,24 @@ body {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* Tiptap Editor Styles */
-.tiptap-ide .ProseMirror {
+/* ============================================
+   Cognitive Editor - Grid-based NodeView Styles
+   ============================================ */
+
+.cognitive-editor-content {
   outline: none;
-  min-height: 100%;
 }
 
-.tiptap-ide .ProseMirror > * + * {
-  margin-top: 0.25rem;
+.cognitive-editor-content .ProseMirror {
+  outline: none;
 }
 
-.tiptap-ide .ProseMirror p.is-editor-empty:first-child::before {
+.cognitive-editor-content .ProseMirror > * + * {
+  margin-top: 0.5rem;
+}
+
+/* Placeholder */
+.cognitive-editor-content .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: #9ca3af;
@@ -79,37 +86,77 @@ body {
   height: 0;
 }
 
-.tiptap-ide .line-row {
-  min-height: 2rem;
+/* Grid Block Styles */
+.cognitive-block {
+  min-height: 2.5rem;
+  transition: all 0.15s ease;
 }
 
-.tiptap-ide .line-content {
-  min-height: 1.75rem;
-}
-
-.tiptap-ide .ProseMirror-focused .line-row:has(.ProseMirror-selectednode),
-.tiptap-ide .line-row:focus-within {
-  background: rgba(99, 102, 241, 0.04);
+.cognitive-block:hover {
+  background: rgba(99, 102, 241, 0.02);
   border-radius: 0.5rem;
 }
 
-.tiptap-ide .line-gutter {
+/* Gutter Column */
+.gutter-column {
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Writing Mode Styles */
-.tiptap-writing .ProseMirror {
+/* Content Column */
+.content-column .ProseMirror-selectednode {
+  outline: 2px solid rgba(99, 102, 241, 0.3);
+  border-radius: 0.25rem;
+}
+
+/* Selection */
+.cognitive-editor-content ::selection {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+/* Focus state */
+.cognitive-block:focus-within {
+  background: rgba(99, 102, 241, 0.03);
+  border-radius: 0.5rem;
+}
+
+/* Smooth tag animation */
+@keyframes tagAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.gutter-column > div:not(:empty) {
+  animation: tagAppear 0.3s ease-out forwards;
+}
+
+/* ============================================
+   Writing Mode - Flow Writing Styles
+   ============================================ */
+
+.writing-editor {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 2.2;
+  color: #374151;
+}
+
+.writing-editor .ProseMirror {
   outline: none;
   min-height: 100%;
-  line-height: 2.2;
 }
 
-.tiptap-writing .ProseMirror p {
-  margin: 0;
+.writing-editor .ProseMirror p {
+  margin-bottom: 1.5rem;
 }
 
-.tiptap-writing .ProseMirror p.is-editor-empty:first-child::before {
+.writing-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: #9ca3af;
@@ -117,11 +164,35 @@ body {
   height: 0;
 }
 
-/* Selection styles */
-.tiptap-ide .ProseMirror ::selection {
-  background: rgba(99, 102, 241, 0.2);
+.writing-editor .ProseMirror ::selection {
+  background: rgba(99, 102, 241, 0.12);
 }
 
-.tiptap-writing .ProseMirror ::selection {
+/* ============================================
+   IDE Mode - Sentence-based Editing Styles
+   ============================================ */
+
+.ide-editor-content {
+  outline: none;
+}
+
+.ide-editor-content .ProseMirror {
+  outline: none;
+}
+
+.ide-editor-content .ProseMirror > * + * {
+  margin-top: 0.25rem;
+}
+
+.ide-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  font-style: italic;
+  pointer-events: none;
+  height: 0;
+}
+
+.ide-editor-content ::selection {
   background: rgba(99, 102, 241, 0.15);
 }

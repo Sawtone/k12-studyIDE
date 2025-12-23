@@ -1,0 +1,50 @@
+import { Node, mergeAttributes } from '@tiptap/core'
+import { ReactNodeViewRenderer } from '@tiptap/react'
+import { BlockNodeView } from '../components/BlockNodeView.jsx'
+
+export const CognitiveParagraph = Node.create({
+  name: 'cognitiveParagraph',
+  group: 'block',
+  content: 'inline*',
+  
+  addAttributes() {
+    return {
+      uuid: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-uuid'),
+        renderHTML: attributes => {
+          if (!attributes.uuid) return {}
+          return { 'data-uuid': attributes.uuid }
+        },
+      },
+      aiLabel: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-ai-label'),
+        renderHTML: attributes => {
+          if (!attributes.aiLabel) return {}
+          return { 'data-ai-label': attributes.aiLabel }
+        },
+      },
+      aiSuggestion: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-ai-suggestion'),
+        renderHTML: attributes => {
+          if (!attributes.aiSuggestion) return {}
+          return { 'data-ai-suggestion': attributes.aiSuggestion }
+        },
+      },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'p' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['p', mergeAttributes(HTMLAttributes), 0]
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(BlockNodeView)
+  },
+})
