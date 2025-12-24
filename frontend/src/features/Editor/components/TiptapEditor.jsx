@@ -56,7 +56,7 @@ export const TiptapEditor = ({ content, onChange, isIDEMode }) => {
 function convertToTiptapContent(text) {
   if (!text) return '<p></p>'
   
-  const sentences = text.split(/(?<=[。！？])/g).filter(s => s.trim())
+  const sentences = text.split(/(?<=[。！？…])/g).filter(s => s.trim())
   
   if (sentences.length === 0) return '<p></p>'
   

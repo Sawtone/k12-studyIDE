@@ -3,7 +3,7 @@ export const calculateWordCount = (text) => {
 }
 
 export const calculateSentenceCount = (text) => {
-  return text.split(/(?<=[。！？])/g).filter(s => s.trim()).length
+  return text.split(/(?<=[。！？…])/g).filter(s => s.trim()).length
 }
 
 export const calculateReadingTime = (wordCount) => {

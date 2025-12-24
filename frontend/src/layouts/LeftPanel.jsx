@@ -3,7 +3,7 @@ import { Sparkles, ChevronDown } from 'lucide-react'
 import { FileTree } from '../features/FileTree/FileTree'
 import { AIChat } from '../features/AIChat/AIChat'
 
-export const LeftPanel = ({ width }) => {
+export const LeftPanel = ({ width, chatMessage }) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
@@ -42,7 +42,7 @@ export const LeftPanel = ({ width }) => {
             
             {/* 聊天区域 */}
             <div className="flex-1 overflow-hidden p-2 animate-fadeIn">
-              <AIChat />
+              <AIChat externalMessage={chatMessage} />
             </div>
           </>
         )}

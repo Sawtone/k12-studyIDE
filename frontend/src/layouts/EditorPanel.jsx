@@ -1,8 +1,12 @@
+import { useRef } from 'react'
 import { FileText } from 'lucide-react'
 import { ModeToggle } from '../components/ModeToggle'
 import { Editor } from '../features/Editor/Editor'
 
-export const EditorPanel = ({ isIDEMode, onModeToggle, content, setContent, sentenceCount }) => {
+export const EditorPanel = ({ isIDEMode, onModeToggle, content, setContent, sentenceCount, onAnalysisDataChange, editorRef }) => {
+  const internalEditorRef = useRef(null)
+  const actualRef = editorRef || internalEditorRef
+  
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-white mx-0.5 rounded-t-xl shadow-sm border border-gray-200 border-b-0 mt-2">
       <div className="h-12 border-b border-gray-100 flex items-center justify-between px-4 bg-gray-50/50 rounded-t-xl">
@@ -17,7 +21,7 @@ export const EditorPanel = ({ isIDEMode, onModeToggle, content, setContent, sent
       </div>
       
       <div className="flex-1 overflow-hidden">
-        <Editor isIDEMode={isIDEMode} content={content} setContent={setContent} />
+        <Editor ref={actualRef} isIDEMode={isIDEMode} content={content} setContent={setContent} onAnalysisDataChange={onAnalysisDataChange} />
       </div>
     </div>
   )

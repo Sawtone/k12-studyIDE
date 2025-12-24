@@ -196,3 +196,31 @@ body {
 .ide-editor-content ::selection {
   background: rgba(99, 102, 241, 0.15);
 }
+
+/* 高亮节点样式 - 不影响布局 */
+.highlighted-node {
+  background-color: rgba(255, 237, 74, 0.3) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.6) !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease !important;
+  animation: highlightPulse 2s ease-out;
+}
+
+/* 确保高亮时不影响原有边框和间距 */
+.highlighted-node.content-column {
+  border-color: rgba(255, 193, 7, 0.6) !important;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(255, 237, 74, 0.4);
+    box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.8);
+  }
+  50% {
+    background-color: rgba(255, 237, 74, 0.35);
+    box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.7);
+  }
+  100% {
+    background-color: rgba(255, 237, 74, 0.3);
+    box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.6);
+  }
+}

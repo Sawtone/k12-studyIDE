@@ -1,15 +1,43 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Send } from 'lucide-react'
 
-export const AIChat = () => {
+export const AIChat = ({ externalMessage }) => {
   const [input, setInput] = useState('')
-  const messages = [
+  const [messages, setMessages] = useState([
     { role: 'ai', content: '👋 你好！我是写作助手，随时为你服务。' },
-    { role: 'ai', content: '💡 第二段存在逻辑跳跃，需要帮你修复吗？' },
-    { role: 'user', content: '好的，请帮我看看' },
-    { role: 'ai', content: '✨ 建议添加过渡句说明为什么需要谨慎。' },
-  ]
+  ])
+  const messagesEndRef = useRef(null)
+  
+  // 接收外部消息（从右侧建议面板）
+  useEffect(() => {
+    if (externalMessage) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'user', content: externalMessage },
+        { role: 'ai', content: '✨ 收到！我来帮你处理这个建议。' }
+      ])
+      // 滚动到底部
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
+  }, [externalMessage])
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
+  const handleSend = () => {
+    if (input.trim()) {
+      setMessages(prev => [...prev, { role: 'user', content: input }])
+      setInput('')
+      setTimeout(() => {
+        setMessages(prev => [...prev, { role: 'ai', content: '✨ 收到你的消息，让我来帮你分析一下。' }])
+        scrollToBottom()
+      }, 500)
+    }
+  }
+  
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
@@ -24,6 +52,7 @@ export const AIChat = () => {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <div className="mt-3 flex gap-2">
         <input
@@ -33,7 +62,11 @@ export const AIChat = () => {
           placeholder="输入问题..."
           className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 transition-all"
         />
-        <button className="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors">
+        <button 
+          onClick={handleSend}
+          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+          className="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors"
+        >
           <Send size={16} />
         </button>
       </div>
