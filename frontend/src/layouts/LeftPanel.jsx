@@ -3,7 +3,7 @@ import { Sparkles, ChevronDown } from 'lucide-react'
 import { FileTree } from '../features/FileTree/FileTree'
 import { AIChat } from '../features/AIChat/AIChat'
 
-export const LeftPanel = ({ width }) => {
+export const LeftPanel = ({ width, onSessionSelect, activeSessionId }) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
@@ -14,7 +14,7 @@ export const LeftPanel = ({ width }) => {
           isExpanded ? 'flex-[1]' : 'flex-[2]'
         }`}
       >
-        <FileTree />
+        <FileTree onSessionSelect={onSessionSelect} activeSessionId={activeSessionId} />
       </div>
       
       {/* AI Chat Panel */}
