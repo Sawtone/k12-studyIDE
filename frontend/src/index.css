@@ -230,3 +230,102 @@ body {
 .ide-editor-content ::selection {
   background: rgba(99, 102, 241, 0.15);
 }
+
+/* ============================================
+   Rainbow Border Animation - Focus Timer
+   ============================================ */
+
+@keyframes rainbow-rotate {
+  0% {
+    --angle: 0deg;
+  }
+  100% {
+    --angle: 360deg;
+  }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.rainbow-border {
+  position: relative;
+  background: white;
+  border: none;
+  z-index: 0;
+}
+
+.rainbow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from var(--angle),
+    #ff6b6b,
+    #feca57,
+    #48dbfb,
+    #ff9ff3,
+    #54a0ff,
+    #5f27cd,
+    #00d2d3,
+    #ff6b6b
+  );
+  z-index: -1;
+  animation: rainbow-rotate 3s linear infinite;
+}
+
+.rainbow-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: white;
+  z-index: -1;
+}
+
+/* ============================================
+   Apple-style Aurora Header Background
+   ============================================ */
+
+.header-aurora {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.header-aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(90deg, 
+      rgba(251, 191, 36, 0.06) 0%, 
+      rgba(244, 114, 182, 0.06) 20%, 
+      rgba(168, 85, 247, 0.07) 40%, 
+      rgba(59, 130, 246, 0.06) 60%, 
+      rgba(34, 197, 94, 0.05) 80%, 
+      rgba(251, 191, 36, 0.06) 100%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header-aurora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.3) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header-aurora > * {
+  position: relative;
+  z-index: 1;
+}

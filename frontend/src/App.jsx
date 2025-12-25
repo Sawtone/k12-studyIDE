@@ -146,14 +146,7 @@ function App() {
 
   return (
     <div ref={containerRef} className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      <Header
-        wordCount={wordCount}
-        sentenceCount={sentenceCount}
-        readingTime={readingTime}
-        syncing={syncing}
-        lastSaved={lastSaved}
-        sessionTitle={currentSession?.title}
-      />
+      <Header syncing={syncing} lastSaved={lastSaved} />
 
       <div className="flex-1 flex overflow-hidden">
         <LeftPanel

@@ -82,7 +82,7 @@ const WritingStats = ({ content }) => {
   const tipIndex = useMemo(() => Math.floor(Math.random() * writingTips.length), [])
 
   return (
-    <div className="border-t border-gray-100 bg-white">
+    <div className="border-t border-gray-100 bg-gray-50/50">
       {/* 统计数据 */}
       <div className="px-3 py-2.5 grid grid-cols-4 gap-1">
         <StatItem icon={Type} label="字符" value={stats.chars} color="text-blue-500" />
@@ -132,13 +132,13 @@ export const RightPanel = ({ width, sessionId, content }) => {
     <div className="flex h-full">
       {/* 内容面板 */}
       <div
-        className={`bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-out ${
+        className={`bg-gray-50/50 border-l border-gray-100 flex flex-col overflow-hidden transition-all duration-300 ease-out ${
           isCollapsed ? 'w-0 opacity-0' : 'opacity-100'
         }`}
         style={{ width: isCollapsed ? 0 : width - 44 }}
       >
         {/* 标题栏 - 显示当前工具名称 */}
-        <div className="px-3 py-2.5 flex items-center justify-between bg-white border-b border-gray-100">
+        <div className="px-3 py-2.5 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
           <div className="flex items-center gap-2">
             {activeTool && <activeTool.icon size={14} className={activeColors.text} />}
             <span className="text-xs font-semibold text-gray-700">{activeTool?.label}</span>
@@ -173,7 +173,7 @@ export const RightPanel = ({ width, sessionId, content }) => {
       </div>
 
       {/* 垂直工具栏 */}
-      <div className="w-11 bg-slate-50 border-l border-gray-200 flex flex-col items-center py-2 gap-1">
+      <div className="w-11 bg-slate-50/80 border-l border-gray-100 flex flex-col items-center py-2 gap-1">
         {/* 展开按钮（折叠时显示） */}
         {isCollapsed && (
           <button

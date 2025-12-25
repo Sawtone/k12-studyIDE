@@ -11,7 +11,7 @@ export const LeftPanel = ({ width, onSessionSelect, activeSessionId, editorConte
     <div className="flex h-full">
       {/* 垂直工具栏 - 折叠时显示 */}
       <div
-        className={`bg-slate-50 border-r border-gray-200 flex flex-col items-center py-2 gap-1 transition-all duration-300 ${
+        className={`bg-slate-50/80 border-r border-gray-100 flex flex-col items-center py-2 gap-1 transition-all duration-300 ${
           isCollapsed ? 'w-11' : 'w-0 overflow-hidden'
         }`}
       >
@@ -60,7 +60,7 @@ export const LeftPanel = ({ width, onSessionSelect, activeSessionId, editorConte
 
       {/* 主内容面板 */}
       <div
-        className={`bg-white border-r border-gray-200 flex flex-col overflow-hidden relative transition-all duration-300 ease-out ${
+        className={`bg-gray-50/50 border-r border-gray-100 flex flex-col overflow-hidden relative transition-all duration-300 ease-out ${
           isCollapsed ? 'w-0 opacity-0' : 'opacity-100'
         }`}
         style={{ width: isCollapsed ? 0 : width }}

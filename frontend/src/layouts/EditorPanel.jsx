@@ -94,9 +94,9 @@ export const EditorPanel = ({
   const inspirationBtnRef = useRef(null)
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-white mx-0.5 rounded-t-xl shadow-sm border border-gray-200 border-b-0 mt-2">
+    <div className="flex-1 flex flex-col overflow-hidden bg-white shadow-sm border-x border-gray-100/80">
       {/* Header */}
-      <div className="h-12 border-b border-gray-100 flex items-center justify-between px-4 bg-gray-50/50 rounded-t-xl">
+      <div className="h-12 border-b border-gray-100 flex items-center justify-between px-4 bg-gradient-to-b from-gray-50/80 to-white">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           {isIDEMode ? (
             <FileCode size={16} className="text-amber-500" />

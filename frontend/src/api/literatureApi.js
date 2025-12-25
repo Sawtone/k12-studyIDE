@@ -84,7 +84,16 @@ export async function analyzeStructure(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!response.ok) throw new Error(`分析文章结构失败: ${response.status}`)
+  
+  if (!response.ok) {
+    // 如果是唯一约束冲突（数据已存在），尝试获取缓存
+    const errorText = await response.text()
+    if (errorText.includes('UniqueViolation') || errorText.includes('duplicate key')) {
+      // 数据已存在，尝试获取缓存的结果
+      return getStructure(data.session_id)
+    }
+    throw new Error(`分析文章结构失败: ${response.status}`)
+  }
   return response.json()
 }
 
@@ -102,6 +111,14 @@ export async function analyzeHealth(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!response.ok) throw new Error(`评估健康度失败: ${response.status}`)
+  
+  if (!response.ok) {
+    // 如果是唯一约束冲突（数据已存在），尝试获取缓存
+    const errorText = await response.text()
+    if (errorText.includes('UniqueViolation') || errorText.includes('duplicate key')) {
+      return getHealthScore(data.session_id)
+    }
+    throw new Error(`评估健康度失败: ${response.status}`)
+  }
   return response.json()
 }
