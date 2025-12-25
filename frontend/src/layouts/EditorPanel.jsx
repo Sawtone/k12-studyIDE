@@ -36,7 +36,8 @@ const NoSessionState = () => (
 
       <h2 className="text-xl font-semibold text-gray-800 mb-2">开始你的写作之旅</h2>
       <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-        从左侧面板创建一个新会话，<br />
+        从左侧面板创建一个新会话，
+        <br />
         或选择已有的会话继续写作
       </p>
 
@@ -69,9 +70,7 @@ const NoSessionState = () => (
           </div>
           <div className="text-left">
             <div className="text-xs font-medium text-gray-700">AI 写作助手</div>
-            <div className="text-[11px] text-gray-500 mt-0.5">
-              写作过程中，点击"写作灵感"获取 AI 建议
-            </div>
+            <div className="text-[11px] text-gray-500 mt-0.5">写作过程中，点击"写作灵感"获取 AI 建议</div>
           </div>
         </div>
       </motion.div>
@@ -103,9 +102,7 @@ export const EditorPanel = ({
           ) : (
             <FileText size={16} className="text-indigo-500" />
           )}
-          <span className="font-medium truncate max-w-[200px]">
-            {sessionTitle || '未选择会话'}
-          </span>
+          <span className="font-medium truncate max-w-[200px]">{sessionTitle || '未选择会话'}</span>
           {sessionId && (
             <>
               <span className="text-gray-400">·</span>
@@ -118,10 +115,7 @@ export const EditorPanel = ({
           {/* 写作灵感按钮 - 仅在文学模式且有会话时显示 */}
           {!isIDEMode && sessionId && (
             <div ref={inspirationBtnRef}>
-              <InspirationButton
-                onClick={() => setShowInspiration(!showInspiration)}
-                disabled={!sessionId}
-              />
+              <InspirationButton onClick={() => setShowInspiration(!showInspiration)} disabled={!sessionId} />
             </div>
           )}
 

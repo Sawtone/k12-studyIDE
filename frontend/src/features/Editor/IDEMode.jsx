@@ -3,35 +3,33 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { CognitiveParagraph } from './extensions/CognitiveParagraph.jsx'
 import { ParagraphDivider } from './extensions/ParagraphDivider.jsx'
-import { useMockAnalysis } from './hooks/useMockAnalysis.js'
-import { Sparkles, RotateCcw, Loader2 } from 'lucide-react'
 import { useEffect } from 'react'
 
 // 将文本按段落和句子分割转换为 HTML
 const textToSentenceHtml = (text) => {
   if (!text) return '<p></p>'
-  
+
   // 先按双换行分割段落
   const paragraphs = text.split(/\n\n+/)
-  
+
   const htmlParts = []
-  
+
   paragraphs.forEach((para, paraIndex) => {
     // 每个段落内按句子分割
-    const sentences = para.split(/(?<=[。！？])/g).filter(s => s.trim())
-    
+    const sentences = para.split(/(?<=[。！？])/g).filter((s) => s.trim())
+
     if (sentences.length > 0) {
-      sentences.forEach(s => {
+      sentences.forEach((s) => {
         htmlParts.push(`<p>${s.trim()}</p>`)
       })
     }
-    
+
     // 段落之间添加分隔符（最后一个段落后不加）
     if (paraIndex < paragraphs.length - 1) {
       htmlParts.push('<hr data-type="paragraph-divider">')
     }
   })
-  
+
   return htmlParts.length > 0 ? htmlParts.join('') : '<p></p>'
 }
 
@@ -40,7 +38,7 @@ const textToSentenceHtml = (text) => {
 const extractTextFromEditor = (editor) => {
   const parts = []
   let currentParagraph = []
-  
+
   editor.state.doc.forEach((node) => {
     if (node.type.name === 'cognitiveParagraph') {
       const text = node.textContent.trim()
@@ -66,12 +64,12 @@ const extractTextFromEditor = (editor) => {
       }
     }
   })
-  
+
   // 保存最后一个段落
   if (currentParagraph.length > 0) {
     parts.push(currentParagraph.join(''))
   }
-  
+
   return parts.join('\n\n')
 }
 
@@ -91,7 +89,7 @@ export const IDEMode = ({ content, onContentChange }) => {
       CognitiveParagraph,
       ParagraphDivider,
       Placeholder.configure({
-        placeholder: '开始写作，让 AI 帮你分析文章结构...',
+        placeholder: '开始写作，每句话一行，空行分段...',
         emptyEditorClass: 'is-editor-empty',
       }),
     ],
@@ -107,8 +105,6 @@ export const IDEMode = ({ content, onContentChange }) => {
     },
   })
 
-  const { isAnalyzing, hasAnalyzed, runAnalysis, clearAnalysis } = useMockAnalysis(editor)
-
   // 当 content 从外部变化时同步
   useEffect(() => {
     if (editor && !editor.isFocused) {
@@ -119,7 +115,7 @@ export const IDEMode = ({ content, onContentChange }) => {
         }
       })
       const currentContent = currentTexts.join('')
-      
+
       if (currentContent !== content) {
         editor.commands.setContent(textToSentenceHtml(content))
       }
@@ -128,43 +124,8 @@ export const IDEMode = ({ content, onContentChange }) => {
 
   return (
     <div className="ide-mode-container h-full flex flex-col">
-      {/* Toolbar */}
-      <div className="ide-toolbar flex items-center justify-end gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50">
-        {hasAnalyzed && (
-          <button
-            onClick={clearAnalysis}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-all"
-          >
-            <RotateCcw size={12} />
-            <span>清除标注</span>
-          </button>
-        )}
-        
-        <button
-          onClick={runAnalysis}
-          disabled={isAnalyzing}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-            isAnalyzing 
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-              : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-md'
-          }`}
-        >
-          {isAnalyzing ? (
-            <>
-              <Loader2 size={12} className="animate-spin" />
-              <span>分析中...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles size={12} />
-              <span>AI 结构分析</span>
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Editor Canvas */}
-      <div 
+      <div
         className="ide-canvas flex-1 overflow-auto"
         style={{
           backgroundColor: '#f8fafc',

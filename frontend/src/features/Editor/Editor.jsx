@@ -5,7 +5,7 @@ export const Editor = ({ isIDEMode, content, setContent, sessionId, inspiration,
   if (isIDEMode) {
     return <IDEMode content={content} onContentChange={setContent} sessionId={sessionId} />
   }
-  
+
   return (
     <WritingMode
       content={content}

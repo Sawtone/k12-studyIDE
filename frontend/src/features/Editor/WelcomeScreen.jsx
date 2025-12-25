@@ -90,14 +90,14 @@ export const WelcomeScreen = ({ sessionId, onStartWriting }) => {
 
   return (
     <div
-      className="h-full overflow-auto"
+      className="h-full overflow-auto flex items-center justify-center"
       style={{
         backgroundColor: '#fdfbf7',
         backgroundImage: 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)',
         backgroundSize: '24px 24px',
       }}
     >
-      <div className="max-w-2xl mx-auto py-8 px-8">
+      <div className="w-full max-w-xl px-6 py-8">
         {/* 欢迎区域 */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

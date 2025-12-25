@@ -44,7 +44,7 @@ export const ModeToggle = ({ isIDEMode, onToggle }) => {
         }`}
       >
         <Code2 size={12} className={isIDEMode ? 'drop-shadow-sm' : ''} />
-        <span>IDE</span>
+        <span>逐句</span>
       </button>
     </div>
   )

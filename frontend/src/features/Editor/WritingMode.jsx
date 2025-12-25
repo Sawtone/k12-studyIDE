@@ -1,7 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { WelcomeScreen } from './WelcomeScreen'
 import { InspirationBanner } from './InspirationBanner'
@@ -31,8 +31,12 @@ const isEmptyContent = (content) => {
 }
 
 export const WritingMode = ({ content, onContentChange, sessionId, inspiration, setInspiration }) => {
-  // 是否显示欢迎页（仅对新会话且内容为空且无灵感时显示）
+  // 是否显示欢迎页
   const [showWelcome, setShowWelcome] = useState(false)
+  // 记录上一个 sessionId
+  const prevSessionIdRef = useRef(null)
+  // 标记是否刚切换会话，等待 content 同步
+  const pendingWelcomeCheckRef = useRef(false)
 
   const editor = useEditor({
     extensions: [
@@ -62,27 +66,34 @@ export const WritingMode = ({ content, onContentChange, sessionId, inspiration, 
     },
   })
 
-  // 记录上一个 sessionId，用于检测会话切换
-  const prevSessionIdRef = useRef(null)
-
   // 从外部灵感状态获取数据
   const currentTopic = inspiration?.topic || null
   const currentInspiration = inspiration?.inspiration || null
 
-  // sessionId 变化时判断是否显示欢迎页
+  // 检查是否应该显示欢迎页
+  const checkShowWelcome = useCallback((contentToCheck, inspirationToCheck) => {
+    const hasInspiration = inspirationToCheck?.topic && inspirationToCheck?.inspiration
+    const isEmpty = isEmptyContent(contentToCheck)
+    return isEmpty && !hasInspiration
+  }, [])
+
+  // sessionId 变化时标记需要检查欢迎页
   useEffect(() => {
     if (sessionId && sessionId !== prevSessionIdRef.current) {
-      // 会话切换了
       prevSessionIdRef.current = sessionId
-
-      // 检查该会话是否已有灵感
-      const hasInspiration = inspiration?.topic && inspiration?.inspiration
-
-      // 新会话且内容为空且无灵感时显示欢迎页
-      const isEmpty = isEmptyContent(content)
-      setShowWelcome(isEmpty && !hasInspiration)
+      // 标记需要在 content 更新后检查
+      pendingWelcomeCheckRef.current = true
     }
-  }, [sessionId, content, inspiration])
+  }, [sessionId])
+
+  // content 变化时检查是否需要显示欢迎页
+  useEffect(() => {
+    if (pendingWelcomeCheckRef.current) {
+      pendingWelcomeCheckRef.current = false
+      const shouldShow = checkShowWelcome(content, inspiration)
+      setShowWelcome(shouldShow)
+    }
+  }, [content, inspiration, checkShowWelcome])
 
   // 内容变化时更新编辑器
   useEffect(() => {
