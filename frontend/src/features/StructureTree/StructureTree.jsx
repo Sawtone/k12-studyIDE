@@ -1,6 +1,79 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
+import { ChevronRight, ChevronDown, FileText, AlignLeft, Type, RefreshCw, Loader2 } from 'lucide-react'
 import { getStructure, analyzeStructure } from '../../api/literatureApi'
+
+// 根据节点类型获取图标和颜色
+const getNodeStyle = (type) => {
+  switch (type) {
+    case 'root':
+      return { icon: FileText, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' }
+    case 'paragraph':
+      return { icon: AlignLeft, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' }
+    case 'sentence':
+      return { icon: Type, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' }
+    default:
+      return { icon: FileText, color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-100' }
+  }
+}
+
+// 树节点组件
+const TreeNode = ({ node, level = 0 }) => {
+  const [expanded, setExpanded] = useState(level < 2) // 默认展开前两层
+  const hasChildren = node.children && node.children.length > 0
+  const style = getNodeStyle(node.type)
+  const Icon = style.icon
+
+  return (
+    <div className="select-none">
+      <div
+        className={`flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors`}
+        style={{ paddingLeft: `${level * 12 + 8}px` }}
+        onClick={() => hasChildren && setExpanded(!expanded)}
+      >
+        {/* 展开/收起图标 */}
+        <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 mt-0.5">
+          {hasChildren ? (
+            expanded ? (
+              <ChevronDown size={12} className="text-gray-400" />
+            ) : (
+              <ChevronRight size={12} className="text-gray-400" />
+            )
+          ) : (
+            <div className="w-1 h-1 rounded-full bg-gray-300" />
+          )}
+        </div>
+
+        {/* 节点图标 */}
+        <div className={`p-1 rounded ${style.bg} flex-shrink-0`}>
+          <Icon size={12} className={style.color} />
+        </div>
+
+        {/* 节点内容 */}
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-medium text-gray-700 truncate">{node.title}</div>
+          {node.summary && (
+            <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{node.summary}</div>
+          )}
+        </div>
+      </div>
+
+      {/* 子节点 */}
+      {hasChildren && expanded && (
+        <div className="relative">
+          {/* 连接线 */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-px bg-gray-200"
+            style={{ left: `${level * 12 + 16}px` }}
+          />
+          {node.children.map((child, index) => (
+            <TreeNode key={child.id || index} node={child} level={level + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 export const StructureTree = ({ sessionId, content }) => {
   const [structure, setStructure] = useState(null)
@@ -42,8 +115,13 @@ export const StructureTree = ({ sessionId, content }) => {
     fetchStructure()
   }, [sessionId])
 
-  // 从 API 响应中提取节点
-  const nodes = structure?.nodes || structure?.sections || structure?.structure || []
+  // 内容变化时清空结构（提示用户重新分析）
+  useEffect(() => {
+    // 不清空，但可以显示提示
+  }, [content])
+
+  // 从 API 响应中提取树结构
+  const tree = structure?.tree
 
   if (loading) {
     return (
@@ -55,91 +133,70 @@ export const StructureTree = ({ sessionId, content }) => {
   }
 
   if (!sessionId) {
-    return (
-      <div className="text-center py-8 text-gray-400 text-xs">
-        请先选择一个会话
-      </div>
-    )
+    return <div className="text-center py-8 text-gray-400 text-xs">请先选择一个会话</div>
   }
 
   return (
     <div>
+      {/* 头部信息 */}
+      {structure && (
+        <div className="mb-3 p-2.5 bg-gradient-to-r from-indigo-50 to-white rounded-lg border border-indigo-100">
+          {structure.structure_type && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded-full font-medium">
+                {structure.structure_type}
+              </span>
+            </div>
+          )}
+          {structure.overall_pattern && (
+            <p className="text-[11px] text-gray-600 leading-relaxed">{structure.overall_pattern}</p>
+          )}
+        </div>
+      )}
+
       {/* 操作按钮 */}
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-[10px] text-gray-400">
+          {tree ? '点击节点展开/收起' : ''}
+        </span>
         <button
           onClick={handleAnalyze}
           disabled={loading || !content}
           className="flex items-center gap-1 px-2 py-1 text-[10px] text-indigo-600 hover:bg-indigo-50 rounded transition-colors disabled:opacity-50"
         >
           <RefreshCw size={10} />
-          重新分析
+          {tree ? '重新分析' : '开始分析'}
         </button>
       </div>
 
-      {error && (
-        <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>
-      )}
+      {error && <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>}
 
-      {nodes.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-400 text-xs mb-3">暂无结构分析</p>
-          <button
-            onClick={handleAnalyze}
-            disabled={!content}
-            className="px-3 py-1.5 bg-indigo-500 text-white text-xs rounded-lg hover:bg-indigo-600 disabled:opacity-50"
-          >
-            开始分析
-          </button>
+      {/* 树形结构 */}
+      {tree ? (
+        <div className="border border-gray-100 rounded-lg overflow-hidden">
+          <TreeNode node={tree} level={0} />
         </div>
       ) : (
-        <div className="relative">
-          <div className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-gray-200" />
-          <div className="space-y-3">
-            {nodes.map((node, i) => {
-              const status = node.status || (node.issues?.length > 0 ? 'warning' : 'ok')
-              const label = node.label || node.title || node.name || `段落 ${i + 1}`
-              const desc = node.desc || node.description || node.summary || ''
+        <div className="text-center py-8">
+          <FileText size={32} className="mx-auto mb-2 text-gray-300" />
+          <p className="text-gray-400 text-xs mb-3">暂无结构分析</p>
+          <p className="text-[10px] text-gray-400">点击上方按钮开始分析文章结构</p>
+        </div>
+      )}
 
-              return (
-                <div key={i} className="flex items-start gap-3 relative">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${
-                      status === 'ok' ? 'bg-green-100' : 'bg-rose-100'
-                    }`}
-                  >
-                    {status === 'ok' ? (
-                      <CheckCircle size={16} className="text-green-600" />
-                    ) : (
-                      <AlertCircle size={16} className="text-rose-500" />
-                    )}
-                  </div>
-                  <div
-                    className={`flex-1 p-3 rounded-xl ${
-                      status === 'ok'
-                        ? 'bg-green-50 border border-green-100'
-                        : 'bg-rose-50 border border-rose-100'
-                    }`}
-                  >
-                    <div
-                      className={`font-medium text-sm ${
-                        status === 'ok' ? 'text-green-700' : 'text-rose-600'
-                      }`}
-                    >
-                      {label}
-                    </div>
-                    {desc && (
-                      <div
-                        className={`text-xs mt-0.5 ${
-                          status === 'ok' ? 'text-green-600/70' : 'text-rose-500/70'
-                        }`}
-                      >
-                        {desc}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+      {/* 关系说明 */}
+      {structure?.relationships && structure.relationships.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="text-[10px] text-gray-500 mb-2">段落关系</div>
+          <div className="flex flex-wrap gap-1">
+            {structure.relationships.slice(0, 5).map((rel, i) => (
+              <span
+                key={i}
+                className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded"
+              >
+                {rel.from} → {rel.to}: {rel.relation}
+              </span>
+            ))}
           </div>
         </div>
       )}

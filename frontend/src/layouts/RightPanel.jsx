@@ -39,12 +39,20 @@ export const RightPanel = ({ width, sessionId, content }) => {
         })}
       </div>
 
-      {/* 内容区域 */}
-      <div className="flex-1 overflow-auto p-3">
-        {activeTab === 'structure' && <StructureTree sessionId={sessionId} content={content} />}
-        {activeTab === 'health' && <HealthCheck sessionId={sessionId} content={content} />}
-        {activeTab === 'grammar' && <GrammarCheck sessionId={sessionId} content={content} />}
-        {activeTab === 'polish' && <TextPolish sessionId={sessionId} content={content} />}
+      {/* 内容区域 - 使用 hidden 而不是条件渲染，保持组件状态 */}
+      <div className="flex-1 overflow-hidden relative">
+        <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'structure' ? '' : 'hidden'}`}>
+          <StructureTree sessionId={sessionId} content={content} />
+        </div>
+        <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'health' ? '' : 'hidden'}`}>
+          <HealthCheck sessionId={sessionId} content={content} />
+        </div>
+        <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'grammar' ? '' : 'hidden'}`}>
+          <GrammarCheck sessionId={sessionId} content={content} />
+        </div>
+        <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'polish' ? '' : 'hidden'}`}>
+          <TextPolish sessionId={sessionId} content={content} />
+        </div>
       </div>
     </div>
   )

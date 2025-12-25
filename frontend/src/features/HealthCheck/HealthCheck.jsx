@@ -1,7 +1,98 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
+import { AlertCircle, RefreshCw, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { getHealthScore, analyzeHealth } from '../../api/literatureApi'
+
+// 维度名称映射
+const dimensionLabels = {
+  structure: '结构',
+  coherence: '连贯性',
+  clarity: '清晰度',
+  grammar: '语法',
+  richness: '丰富度',
+}
+
+// 根据分数获取颜色
+const getScoreColor = (score) => {
+  if (score >= 0.8) return { bar: 'bg-green-500', text: 'text-green-600' }
+  if (score >= 0.6) return { bar: 'bg-indigo-500', text: 'text-indigo-600' }
+  return { bar: 'bg-orange-400', text: 'text-orange-600' }
+}
+
+// 维度详情组件
+const DimensionDetail = ({ name, data }) => {
+  const [expanded, setExpanded] = useState(false)
+  const score = Math.round((data.score || 0) * 100)
+  const color = getScoreColor(data.score)
+
+  return (
+    <div className="border border-gray-100 rounded-lg overflow-hidden">
+      <div
+        className="flex items-center gap-3 p-2.5 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="w-4">
+          {expanded ? (
+            <ChevronDown size={12} className="text-gray-400" />
+          ) : (
+            <ChevronRight size={12} className="text-gray-400" />
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-medium text-gray-700">
+              {dimensionLabels[name] || name}
+            </span>
+            <span className={`text-xs font-medium ${color.text}`}>{score}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${score}%` }}
+              transition={{ duration: 0.6 }}
+              className={`h-full ${color.bar} rounded-full`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 bg-gray-50/50 border-t border-gray-100">
+          {data.reasoning && (
+            <p className="text-[11px] text-gray-600 leading-relaxed mb-2">{data.reasoning}</p>
+          )}
+          {data.issues && data.issues.length > 0 && (
+            <div className="mb-2">
+              <div className="text-[10px] text-orange-600 font-medium mb-1">问题</div>
+              <ul className="text-[10px] text-gray-600 space-y-0.5">
+                {data.issues.map((issue, i) => (
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="text-orange-400 mt-0.5">•</span>
+                    {issue}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {data.suggestions && data.suggestions.length > 0 && (
+            <div>
+              <div className="text-[10px] text-green-600 font-medium mb-1">建议</div>
+              <ul className="text-[10px] text-gray-600 space-y-0.5">
+                {data.suggestions.map((sug, i) => (
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    {sug}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 export const HealthCheck = ({ sessionId, content }) => {
   const [healthData, setHealthData] = useState(null)
@@ -40,16 +131,9 @@ export const HealthCheck = ({ sessionId, content }) => {
     fetchHealth()
   }, [sessionId])
 
-  // 从 API 响应中提取指标
-  const metrics = healthData?.metrics || healthData?.scores || []
-  const suggestions = healthData?.suggestions || healthData?.recommendations || []
-  const overallScore = healthData?.overall_score || healthData?.score
-
-  const getColorClass = (value) => {
-    if (value >= 80) return 'bg-green-500'
-    if (value >= 60) return 'bg-indigo-500'
-    return 'bg-orange-400'
-  }
+  const overallScore = healthData?.overall_score
+  const grade = healthData?.grade
+  const dimensions = healthData?.dimensions
 
   if (loading) {
     return (
@@ -61,11 +145,7 @@ export const HealthCheck = ({ sessionId, content }) => {
   }
 
   if (!sessionId) {
-    return (
-      <div className="text-center py-8 text-gray-400 text-xs">
-        请先选择一个会话
-      </div>
-    )
+    return <div className="text-center py-8 text-gray-400 text-xs">请先选择一个会话</div>
   }
 
   return (
@@ -77,71 +157,44 @@ export const HealthCheck = ({ sessionId, content }) => {
           className="flex items-center gap-1 px-2 py-1 text-[10px] text-indigo-600 hover:bg-indigo-50 rounded transition-colors disabled:opacity-50"
         >
           <RefreshCw size={10} />
-          重新评估
+          {healthData ? '重新评估' : '开始评估'}
         </button>
       </div>
 
-      {error && (
-        <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>
-      )}
+      {error && <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>}
 
-      {metrics.length === 0 && !overallScore ? (
+      {!healthData ? (
         <div className="text-center py-8">
+          <AlertCircle size={32} className="mx-auto mb-2 text-gray-300" />
           <p className="text-gray-400 text-xs mb-3">暂无健康度数据</p>
-          <button
-            onClick={handleAnalyze}
-            disabled={!content}
-            className="px-3 py-1.5 bg-indigo-500 text-white text-xs rounded-lg hover:bg-indigo-600 disabled:opacity-50"
-          >
-            开始评估
-          </button>
+          <p className="text-[10px] text-gray-400">点击上方按钮开始评估</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {/* 总分 */}
+          {/* 总分卡片 */}
           {overallScore !== undefined && (
             <div className="text-center p-4 bg-gradient-to-br from-indigo-50 to-white rounded-xl border border-indigo-100">
-              <div className="text-3xl font-bold text-indigo-600">{overallScore}</div>
-              <div className="text-xs text-gray-500 mt-1">综合评分</div>
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-4xl font-bold text-indigo-600">
+                  {Math.round(overallScore * 100)}
+                </div>
+                {grade && (
+                  <div className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-lg font-bold rounded-lg">
+                    {grade}
+                  </div>
+                )}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">综合评分</div>
             </div>
           )}
 
-          {/* 各项指标 */}
-          {metrics.map((m, i) => {
-            const label = m.label || m.name || m.metric
-            const value = m.value || m.score || 0
-            return (
-              <div key={i}>
-                <div className="flex justify-between text-sm mb-1.5">
-                  <span className="text-gray-600">{label}</span>
-                  <span className="font-medium text-gray-700">{value}%</span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${value}%` }}
-                    transition={{ duration: 0.8, delay: i * 0.15 }}
-                    className={`h-full ${getColorClass(value)} rounded-full`}
-                  />
-                </div>
-              </div>
-            )
-          })}
-
-          {/* 建议 */}
-          {suggestions.length > 0 && (
-            <div className="mt-5 p-3 bg-orange-50 rounded-xl border border-orange-100">
-              <div className="flex items-start gap-2">
-                <AlertCircle size={16} className="text-orange-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-medium text-orange-700 text-sm">改进建议</div>
-                  <ul className="text-xs text-orange-600/80 mt-1 leading-relaxed space-y-1">
-                    {suggestions.map((s, i) => (
-                      <li key={i}>{typeof s === 'string' ? s : s.text || s.content}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+          {/* 各维度详情 */}
+          {dimensions && (
+            <div className="space-y-2">
+              <div className="text-xs text-gray-500 mb-2">各维度评分（点击展开详情）</div>
+              {Object.entries(dimensions).map(([key, value]) => (
+                <DimensionDetail key={key} name={key} data={value} />
+              ))}
             </div>
           )}
         </div>

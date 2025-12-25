@@ -28,15 +28,19 @@ export async function checkGrammar(data) {
  * POST /api/v1/literature/polish
  * @param {Object} data - PolishRequest
  * @param {string} data.session_id - 会话ID
- * @param {string} data.content - 待润色的文本
+ * @param {string} data.text - 待润色的文本
  * @param {string} [data.style] - 润色风格
  * @returns {Promise<PolishResponse>}
  */
-export async function polishText(data) {
+export async function polishText({ session_id, content, text, style }) {
   const response = await fetch(`${API_BASE}/literature/polish`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      session_id,
+      text: text || content, // 兼容 content 和 text
+      style,
+    }),
   })
   if (!response.ok) throw new Error(`文本润色失败: ${response.status}`)
   return response.json()

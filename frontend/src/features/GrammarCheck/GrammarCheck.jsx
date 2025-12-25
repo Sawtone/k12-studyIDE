@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertTriangle, CheckCircle, Loader2, Search } from 'lucide-react'
 import { checkGrammar } from '../../api/literatureApi'
 
@@ -7,6 +7,12 @@ export const GrammarCheck = ({ sessionId, content }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [checked, setChecked] = useState(false)
+
+  // 内容变化时重置检查状态
+  useEffect(() => {
+    setChecked(false)
+    setIssues([])
+  }, [content])
 
   const handleCheck = async () => {
     if (!sessionId || !content) return
