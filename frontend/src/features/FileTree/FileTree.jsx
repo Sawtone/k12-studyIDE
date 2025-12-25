@@ -37,6 +37,41 @@ const formatTime = (dateStr) => {
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
+// 生成有趣的默认会话名称
+const generateSessionTitle = () => {
+  const prefixes = ['我的', '新', '']
+  const subjects = [
+    '随笔', '日记', '故事', '感想', '札记', '小记',
+    '作文', '文章', '创作', '灵感', '思绪', '手记'
+  ]
+  const timeLabels = () => {
+    const now = new Date()
+    const hour = now.getHours()
+    if (hour < 6) return '深夜'
+    if (hour < 9) return '清晨'
+    if (hour < 12) return '上午'
+    if (hour < 14) return '午后'
+    if (hour < 18) return '下午'
+    if (hour < 21) return '傍晚'
+    return '夜间'
+  }
+  
+  const random = Math.random()
+  if (random < 0.4) {
+    // 时间 + 主题
+    return `${timeLabels()}${subjects[Math.floor(Math.random() * subjects.length)]}`
+  } else if (random < 0.7) {
+    // 前缀 + 主题
+    return `${prefixes[Math.floor(Math.random() * prefixes.length)]}${subjects[Math.floor(Math.random() * subjects.length)]}`
+  } else {
+    // 日期格式
+    const now = new Date()
+    const month = now.getMonth() + 1
+    const day = now.getDate()
+    return `${month}月${day}日随笔`
+  }
+}
+
 const getModeConfig = (mode) => {
   switch (mode) {
     case 'science':
@@ -302,7 +337,7 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
     try {
       const newSession = await createSession({
         user_id: USER_ID,
-        title: `新会话`,
+        title: generateSessionTitle(),
         mode: 'literature',
       })
       const newId = newSession.id || newSession.session_id
