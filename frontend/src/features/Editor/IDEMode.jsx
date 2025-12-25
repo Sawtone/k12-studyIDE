@@ -33,6 +33,18 @@ const textToSentenceHtml = (text) => {
   return htmlParts.length > 0 ? htmlParts.join('') : '<p></p>'
 }
 
+// 检测文本是否主要是英文
+const isEnglishText = (text) => {
+  // 移除空格和标点后统计字符
+  const cleanText = text.replace(/[\s\p{P}]/gu, '')
+  if (!cleanText) return false
+  
+  // 统计英文字母数量
+  const englishChars = (cleanText.match(/[a-zA-Z]/g) || []).length
+  // 如果英文字母占比超过50%，认为是英文
+  return englishChars / cleanText.length > 0.5
+}
+
 // 从编辑器提取文本，保留段落结构
 // 空行（空的段落节点）视为段落分隔
 const extractTextFromEditor = (editor) => {
@@ -44,9 +56,9 @@ const extractTextFromEditor = (editor) => {
       const text = node.textContent.trim()
       if (text) {
         let sentence = text
-        // 如果句子不以中文标点结尾，自动添加句号
-        if (!/[。！？]$/.test(sentence)) {
-          sentence += '。'
+        // 如果句子不以标点结尾，根据语言自动添加句号
+        if (!/[。！？.!?]$/.test(sentence)) {
+          sentence += isEnglishText(sentence) ? '.' : '。'
         }
         currentParagraph.push(sentence)
       } else {
