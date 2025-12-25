@@ -165,12 +165,8 @@ export const RightPanel = ({ width, sessionId, content }) => {
   const activeColors = colorMap[activeTool?.color || 'indigo']
 
   const handleTabClick = (tabId) => {
-    if (activeTab === tabId && !isCollapsed) {
-      setIsCollapsed(true)
-    } else {
-      setActiveTab(tabId)
-      setIsCollapsed(false)
-    }
+    setActiveTab(tabId)
+    setIsCollapsed(false)
   }
 
   return (
