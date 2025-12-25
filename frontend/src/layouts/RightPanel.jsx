@@ -50,7 +50,7 @@ const colorMap = {
   }
 }
 
-// 写作小贴士
+// 写作小贴士 - 大量数据
 const writingTips = [
   '好文章是改出来的，多读几遍自己的作品',
   '开头要抓人，结尾要有力',
@@ -59,11 +59,40 @@ const writingTips = [
   '写完后大声朗读，不通顺的地方一听就知道',
   '每段只说一个主要意思',
   '用短句增强节奏感',
-  '删掉不必要的词，精简是美德'
+  '删掉不必要的词，精简是美德',
+  '写作时先不要追求完美，先写完再改',
+  '好的标题是文章成功的一半',
+  '多用动词，少用形容词',
+  '避免重复使用同一个词',
+  '段落之间要有过渡',
+  '写作前先列个大纲',
+  '用具体数字代替模糊描述',
+  '删掉"我认为""我觉得"等口头禅',
+  '一句话只表达一个意思',
+  '多读经典作品，模仿优秀的表达',
+  '写完后放一放，隔天再改',
+  '用主动语态代替被动语态',
+  '开门见山，不要绕弯子',
+  '结尾要给读者留下思考空间',
+  '善用比喻，让抽象变具体',
+  '控制句子长度，长短交替',
+  '写作是思考的过程，边写边想',
+  '不要害怕删除，敢于割舍',
+  '多写多练，熟能生巧',
+  '读者的时间很宝贵，言简意赅',
+  '用对话让文章更生动',
+  '注意标点符号的使用',
+  '避免使用陈词滥调',
+  '写作需要专注，找个安静的环境',
+  '灵感来了就记下来，别让它溜走',
+  '写作是一场马拉松，不是短跑',
+  '好文章需要好素材，多观察生活',
 ]
 
 // 写作统计卡片
 const WritingStats = ({ content }) => {
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * writingTips.length))
+  
   const stats = useMemo(() => {
     if (!content || !content.trim()) {
       return { chars: 0, words: 0, paragraphs: 0, readTime: 0 }
@@ -79,12 +108,22 @@ const WritingStats = ({ content }) => {
     return { chars, words, paragraphs, readTime }
   }, [content])
 
-  const tipIndex = useMemo(() => Math.floor(Math.random() * writingTips.length), [])
+  // 切换下一条小贴士（伪随机，避免连续重复）
+  const nextTip = () => {
+    setTipIndex((prev) => {
+      let next = Math.floor(Math.random() * writingTips.length)
+      // 避免连续显示同一条
+      while (next === prev && writingTips.length > 1) {
+        next = Math.floor(Math.random() * writingTips.length)
+      }
+      return next
+    })
+  }
 
   return (
     <div className="border-t border-gray-100 bg-gray-50/50">
       {/* 统计数据 */}
-      <div className="px-3 py-2.5 grid grid-cols-4 gap-1">
+      <div className="px-3 py-3 grid grid-cols-4 gap-1">
         <StatItem icon={Type} label="字符" value={stats.chars} color="text-blue-500" />
         <StatItem icon={FileText} label="字数" value={stats.words} color="text-emerald-500" />
         <StatItem icon={Quote} label="段落" value={stats.paragraphs} color="text-amber-500" />
@@ -93,10 +132,16 @@ const WritingStats = ({ content }) => {
 
       {/* 写作小贴士 */}
       <div className="px-3 pb-3">
-        <div className="p-2.5 bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg border border-gray-100">
-          <div className="flex items-start gap-2">
-            <span className="text-base">💡</span>
-            <p className="text-[11px] text-gray-500 leading-relaxed">{writingTips[tipIndex]}</p>
+        <div
+          onClick={nextTip}
+          className="p-3 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 rounded-xl border border-amber-200/60 cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all group"
+        >
+          <div className="flex items-start gap-2.5">
+            <span className="text-lg group-hover:scale-110 transition-transform">💡</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-amber-800 leading-relaxed font-medium">{writingTips[tipIndex]}</p>
+              <p className="text-[9px] text-amber-500/70 mt-1.5">点击换一条</p>
+            </div>
           </div>
         </div>
       </div>
@@ -154,16 +199,16 @@ export const RightPanel = ({ width, sessionId, content }) => {
 
         {/* 内容区域 */}
         <div className="flex-1 overflow-hidden relative bg-gray-50/30">
-          <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'structure' ? '' : 'hidden'}`}>
+          <div className={`absolute inset-0 overflow-y-scroll p-3 ${activeTab === 'structure' ? '' : 'hidden'}`} style={{ scrollbarGutter: 'stable' }}>
             <StructureTree sessionId={sessionId} content={content} />
           </div>
-          <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'health' ? '' : 'hidden'}`}>
+          <div className={`absolute inset-0 overflow-y-scroll p-3 ${activeTab === 'health' ? '' : 'hidden'}`} style={{ scrollbarGutter: 'stable' }}>
             <HealthCheck sessionId={sessionId} content={content} />
           </div>
-          <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'grammar' ? '' : 'hidden'}`}>
+          <div className={`absolute inset-0 overflow-y-scroll p-3 ${activeTab === 'grammar' ? '' : 'hidden'}`} style={{ scrollbarGutter: 'stable' }}>
             <GrammarCheck sessionId={sessionId} content={content} />
           </div>
-          <div className={`absolute inset-0 overflow-auto p-3 ${activeTab === 'polish' ? '' : 'hidden'}`}>
+          <div className={`absolute inset-0 overflow-y-scroll p-3 ${activeTab === 'polish' ? '' : 'hidden'}`} style={{ scrollbarGutter: 'stable' }}>
             <TextPolish sessionId={sessionId} content={content} />
           </div>
         </div>

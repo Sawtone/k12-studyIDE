@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AlertTriangle, CheckCircle, Loader2, Search } from 'lucide-react'
-import { checkGrammar } from '../../api/literatureApi'
+import { checkGrammar, getGrammarResult } from '../../api/literatureApi'
 
 export const GrammarCheck = ({ sessionId, content }) => {
   const [issues, setIssues] = useState([])
@@ -8,11 +8,22 @@ export const GrammarCheck = ({ sessionId, content }) => {
   const [error, setError] = useState(null)
   const [checked, setChecked] = useState(false)
 
-  // 内容变化时重置检查状态
+  // 加载缓存的语法检查结果
   useEffect(() => {
-    setChecked(false)
-    setIssues([])
-  }, [content])
+    const fetchCachedResult = async () => {
+      if (!sessionId) return
+      try {
+        const result = await getGrammarResult(sessionId)
+        if (result && (result.issues || result.errors || result.problems)) {
+          setIssues(result.issues || result.errors || result.problems || [])
+          setChecked(true)
+        }
+      } catch (err) {
+        // 没有缓存，忽略
+      }
+    }
+    fetchCachedResult()
+  }, [sessionId])
 
   const handleCheck = async () => {
     if (!sessionId || !content) return

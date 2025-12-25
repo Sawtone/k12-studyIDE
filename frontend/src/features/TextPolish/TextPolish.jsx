@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Sparkles, Loader2, Copy, Check, Star, ChevronDown, ChevronRight } from 'lucide-react'
-import { polishText } from '../../api/literatureApi'
+import { polishText, getPolishResult } from '../../api/literatureApi'
 
 const styles = [
   { id: 'formal', label: '正式' },
@@ -104,11 +104,22 @@ export const TextPolish = ({ sessionId, content }) => {
   const [selectedStyle, setSelectedStyle] = useState('formal')
   const [copiedIndex, setCopiedIndex] = useState(null)
 
-  // 内容变化时清空结果
+  // 加载缓存的润色结果
   useEffect(() => {
-    setResults([])
-    setRecommended(null)
-  }, [content])
+    const fetchCachedResult = async () => {
+      if (!sessionId) return
+      try {
+        const result = await getPolishResult(sessionId)
+        if (result && result.versions && result.versions.length > 0) {
+          setResults(result.versions)
+          setRecommended(result.recommended)
+        }
+      } catch (err) {
+        // 没有缓存，忽略
+      }
+    }
+    fetchCachedResult()
+  }, [sessionId])
 
   const handlePolish = async () => {
     if (!sessionId || !content) return

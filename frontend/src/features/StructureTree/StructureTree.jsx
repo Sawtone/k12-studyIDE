@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronRight, ChevronDown, FileText, AlignLeft, Type, RefreshCw, Loader2 } from 'lucide-react'
 import { getStructure, analyzeStructure } from '../../api/literatureApi'
 
@@ -19,9 +19,27 @@ const getNodeStyle = (type) => {
 // 树节点组件
 const TreeNode = ({ node, level = 0 }) => {
   const [expanded, setExpanded] = useState(level < 2) // 默认展开前两层
+  const [textExpanded, setTextExpanded] = useState(false) // 文字展开状态
+  const [isOverflowing, setIsOverflowing] = useState(false) // 是否溢出
+  const titleRef = useRef(null)
+  const summaryRef = useRef(null)
   const hasChildren = node.children && node.children.length > 0
   const style = getNodeStyle(node.type)
   const Icon = style.icon
+
+  // 检测文字是否溢出
+  useEffect(() => {
+    const checkOverflow = () => {
+      const titleEl = titleRef.current
+      const summaryEl = summaryRef.current
+      const titleOverflow = titleEl && titleEl.scrollWidth > titleEl.clientWidth
+      const summaryOverflow = summaryEl && summaryEl.scrollHeight > summaryEl.clientHeight
+      setIsOverflowing(titleOverflow || summaryOverflow)
+    }
+    checkOverflow()
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [node.title, node.summary])
 
   return (
     <div className="select-none">
@@ -50,9 +68,31 @@ const TreeNode = ({ node, level = 0 }) => {
 
         {/* 节点内容 */}
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-medium text-gray-700 truncate">{node.title}</div>
+          <div
+            ref={titleRef}
+            className={`text-xs font-medium text-gray-700 ${textExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
+          >
+            {node.title}
+          </div>
           {node.summary && (
-            <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{node.summary}</div>
+            <div
+              ref={summaryRef}
+              className={`text-[10px] text-gray-500 mt-0.5 ${textExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
+            >
+              {node.summary}
+            </div>
+          )}
+          {/* 展开/收起文字按钮 - 只在实际溢出时显示 */}
+          {(isOverflowing || textExpanded) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setTextExpanded(!textExpanded)
+              }}
+              className="text-[9px] text-indigo-500 hover:text-indigo-600 mt-0.5"
+            >
+              {textExpanded ? '收起' : '展开全文'}
+            </button>
           )}
         </div>
       </div>

@@ -122,3 +122,28 @@ export async function analyzeHealth(data) {
   }
   return response.json()
 }
+
+
+/**
+ * 获取语法检查结果（已缓存）
+ * GET /api/v1/literature/grammar/{session_id}
+ * @param {string} sessionId - 会话ID
+ * @returns {Promise<GrammarCheckResponse>}
+ */
+export async function getGrammarResult(sessionId) {
+  const response = await fetch(`${API_BASE}/literature/grammar/${sessionId}`)
+  if (!response.ok) throw new Error(`获取语法检查结果失败: ${response.status}`)
+  return response.json()
+}
+
+/**
+ * 获取润色结果（已缓存）
+ * GET /api/v1/literature/polish/{session_id}
+ * @param {string} sessionId - 会话ID
+ * @returns {Promise<PolishResponse>}
+ */
+export async function getPolishResult(sessionId) {
+  const response = await fetch(`${API_BASE}/literature/polish/${sessionId}`)
+  if (!response.ok) throw new Error(`获取润色结果失败: ${response.status}`)
+  return response.json()
+}
