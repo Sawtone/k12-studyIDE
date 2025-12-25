@@ -1,6 +1,35 @@
 import { useState, useEffect } from 'react'
-import { Sparkles, Loader2, Copy, Check, Star, ChevronDown, ChevronRight } from 'lucide-react'
+import { Sparkles, Loader2, Copy, Check, Star, ChevronDown, ChevronRight, PenLine } from 'lucide-react'
 import { polishText, getPolishResult } from '../../api/literatureApi'
+
+// 解析错误信息中的字数要求
+const parseMinLengthFromError = (errorMessage) => {
+  const patterns = [
+    /至少[需要]?\s*(\d+)\s*[字个]/,
+    /最少[需要]?\s*(\d+)\s*[字个]/,
+    /minimum\s*(\d+)/i,
+    /at least\s*(\d+)/i,
+    /(\d+)\s*字[以]?上/,
+    /(\d+)\s*characters/i,
+  ]
+  for (const pattern of patterns) {
+    const match = errorMessage.match(pattern)
+    if (match) return parseInt(match[1], 10)
+  }
+  return null
+}
+
+// 字数不足提示组件
+const ContentTooShortBanner = ({ minLength, featureName = '使用此功能' }) => (
+  <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 text-center">
+    <PenLine size={28} className="mx-auto mb-2 text-amber-400" />
+    <p className="text-sm font-medium text-amber-700 mb-1">内容太少啦</p>
+    <p className="text-xs text-amber-600">
+      至少需要 <span className="font-bold">{minLength}</span> 字才能{featureName}
+    </p>
+    <p className="text-[10px] text-amber-500 mt-2">继续写作，写够字数后再来检查吧 ✍️</p>
+  </div>
+)
 
 const styles = [
   { id: 'formal', label: '正式' },
@@ -103,6 +132,7 @@ export const TextPolish = ({ sessionId, content }) => {
   const [error, setError] = useState(null)
   const [selectedStyle, setSelectedStyle] = useState('formal')
   const [copiedIndex, setCopiedIndex] = useState(null)
+  const [minLengthRequired, setMinLengthRequired] = useState(null)
 
   // 加载缓存的润色结果
   useEffect(() => {
@@ -113,6 +143,7 @@ export const TextPolish = ({ sessionId, content }) => {
         if (result && result.versions && result.versions.length > 0) {
           setResults(result.versions)
           setRecommended(result.recommended)
+          setMinLengthRequired(null)
         }
       } catch (err) {
         // 没有缓存，忽略
@@ -125,12 +156,19 @@ export const TextPolish = ({ sessionId, content }) => {
     if (!sessionId || !content) return
     setLoading(true)
     setError(null)
+    setMinLengthRequired(null)
     try {
       const result = await polishText({ session_id: sessionId, content, style: selectedStyle })
       setResults(result.versions || [])
       setRecommended(result.recommended)
     } catch (err) {
-      setError(err.message)
+      const errorMsg = err.message || ''
+      const minLength = parseMinLengthFromError(errorMsg)
+      if (minLength) {
+        setMinLengthRequired(minLength)
+      } else {
+        setError(errorMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -190,6 +228,13 @@ export const TextPolish = ({ sessionId, content }) => {
           </>
         )}
       </button>
+
+      {/* 字数不足提示 */}
+      {minLengthRequired && (
+        <div className="mt-3">
+          <ContentTooShortBanner minLength={minLengthRequired} featureName="润色文本" />
+        </div>
+      )}
 
       {error && <div className="mt-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>}
 

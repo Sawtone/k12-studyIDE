@@ -1,6 +1,36 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, CheckCircle, Loader2, Search, ChevronDown, ChevronRight } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Loader2, Search, ChevronDown, ChevronRight, PenLine } from 'lucide-react'
 import { checkGrammar, getGrammarResult } from '../../api/literatureApi'
+
+// 解析错误信息中的字数要求
+const parseMinLengthFromError = (errorMessage) => {
+  // 匹配类似 "至少需要 50 字" 或 "minimum 50 characters" 的模式
+  const patterns = [
+    /至少[需要]?\s*(\d+)\s*[字个]/,
+    /最少[需要]?\s*(\d+)\s*[字个]/,
+    /minimum\s*(\d+)/i,
+    /at least\s*(\d+)/i,
+    /(\d+)\s*字[以]?上/,
+    /(\d+)\s*characters/i,
+  ]
+  for (const pattern of patterns) {
+    const match = errorMessage.match(pattern)
+    if (match) return parseInt(match[1], 10)
+  }
+  return null
+}
+
+// 字数不足提示组件
+const ContentTooShortBanner = ({ minLength, featureName = '使用此功能' }) => (
+  <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 text-center">
+    <PenLine size={28} className="mx-auto mb-2 text-amber-400" />
+    <p className="text-sm font-medium text-amber-700 mb-1">内容太少啦</p>
+    <p className="text-xs text-amber-600">
+      至少需要 <span className="font-bold">{minLength}</span> 字才能{featureName}
+    </p>
+    <p className="text-[10px] text-amber-500 mt-2">继续写作，写够字数后再来检查吧 ✍️</p>
+  </div>
+)
 
 // 问题卡片组件
 const IssueCard = ({ issue }) => {
@@ -108,6 +138,7 @@ export const GrammarCheck = ({ sessionId, content }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [checked, setChecked] = useState(false)
+  const [minLengthRequired, setMinLengthRequired] = useState(null) // 字数不足时的最低要求
 
   // 加载缓存的语法检查结果
   useEffect(() => {
@@ -118,6 +149,7 @@ export const GrammarCheck = ({ sessionId, content }) => {
         if (result && (result.issues || result.errors || result.problems)) {
           setIssues(result.issues || result.errors || result.problems || [])
           setChecked(true)
+          setMinLengthRequired(null)
         }
       } catch (err) {
         // 没有缓存，忽略
@@ -130,12 +162,19 @@ export const GrammarCheck = ({ sessionId, content }) => {
     if (!sessionId || !content) return
     setLoading(true)
     setError(null)
+    setMinLengthRequired(null)
     try {
       const result = await checkGrammar({ session_id: sessionId, content })
       setIssues(result.issues || result.errors || result.problems || [])
       setChecked(true)
     } catch (err) {
-      setError(err.message)
+      const errorMsg = err.message || ''
+      const minLength = parseMinLengthFromError(errorMsg)
+      if (minLength) {
+        setMinLengthRequired(minLength)
+      } else {
+        setError(errorMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -171,6 +210,11 @@ export const GrammarCheck = ({ sessionId, content }) => {
           )}
         </button>
       </div>
+
+      {/* 字数不足提示 */}
+      {minLengthRequired && (
+        <ContentTooShortBanner minLength={minLengthRequired} featureName="检查语法" />
+      )}
 
       {error && (
         <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>

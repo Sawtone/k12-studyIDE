@@ -1,6 +1,35 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, ChevronDown, FileText, AlignLeft, Type, RefreshCw, Loader2 } from 'lucide-react'
+import { ChevronRight, ChevronDown, FileText, AlignLeft, Type, RefreshCw, Loader2, PenLine } from 'lucide-react'
 import { getStructure, analyzeStructure } from '../../api/literatureApi'
+
+// 解析错误信息中的字数要求
+const parseMinLengthFromError = (errorMessage) => {
+  const patterns = [
+    /至少[需要]?\s*(\d+)\s*[字个]/,
+    /最少[需要]?\s*(\d+)\s*[字个]/,
+    /minimum\s*(\d+)/i,
+    /at least\s*(\d+)/i,
+    /(\d+)\s*字[以]?上/,
+    /(\d+)\s*characters/i,
+  ]
+  for (const pattern of patterns) {
+    const match = errorMessage.match(pattern)
+    if (match) return parseInt(match[1], 10)
+  }
+  return null
+}
+
+// 字数不足提示组件
+const ContentTooShortBanner = ({ minLength, featureName = '使用此功能' }) => (
+  <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 text-center">
+    <PenLine size={28} className="mx-auto mb-2 text-amber-400" />
+    <p className="text-sm font-medium text-amber-700 mb-1">内容太少啦</p>
+    <p className="text-xs text-amber-600">
+      至少需要 <span className="font-bold">{minLength}</span> 字才能{featureName}
+    </p>
+    <p className="text-[10px] text-amber-500 mt-2">继续写作，写够字数后再来检查吧 ✍️</p>
+  </div>
+)
 
 // 根据节点类型获取图标和颜色
 const getNodeStyle = (type) => {
@@ -119,6 +148,7 @@ export const StructureTree = ({ sessionId, content }) => {
   const [structure, setStructure] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [minLengthRequired, setMinLengthRequired] = useState(null)
 
   // 获取缓存的结构
   const fetchStructure = async () => {
@@ -128,6 +158,7 @@ export const StructureTree = ({ sessionId, content }) => {
     try {
       const result = await getStructure(sessionId)
       setStructure(result)
+      setMinLengthRequired(null)
     } catch (err) {
       // 如果没有缓存，显示空状态
       setStructure(null)
@@ -141,11 +172,18 @@ export const StructureTree = ({ sessionId, content }) => {
     if (!sessionId || !content) return
     setLoading(true)
     setError(null)
+    setMinLengthRequired(null)
     try {
       const result = await analyzeStructure({ session_id: sessionId, content })
       setStructure(result)
     } catch (err) {
-      setError(err.message)
+      const errorMsg = err.message || ''
+      const minLength = parseMinLengthFromError(errorMsg)
+      if (minLength) {
+        setMinLengthRequired(minLength)
+      } else {
+        setError(errorMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -208,6 +246,11 @@ export const StructureTree = ({ sessionId, content }) => {
           {tree ? '重新分析' : '开始分析'}
         </button>
       </div>
+
+      {/* 字数不足提示 */}
+      {minLengthRequired && (
+        <ContentTooShortBanner minLength={minLengthRequired} featureName="分析结构" />
+      )}
 
       {error && <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>}
 
