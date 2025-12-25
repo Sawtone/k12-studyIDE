@@ -64,7 +64,11 @@ function App() {
           sessionId={currentSession?.id || currentSession?.session_id}
         />
         <ResizeHandle onMouseDown={handleMouseDown('right')} />
-        <RightPanel width={rightWidth} />
+        <RightPanel 
+          width={rightWidth} 
+          sessionId={currentSession?.id || currentSession?.session_id}
+          content={content}
+        />
       </div>
     </div>
   )

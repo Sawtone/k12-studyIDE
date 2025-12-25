@@ -1,5 +1,5 @@
-import React from 'react'
 import { Sparkles, ChevronRight, Tag, FileText, Clock, Save } from 'lucide-react'
+import { SystemStatus } from '../features/SystemStatus/SystemStatus'
 
 export const Header = ({ wordCount, sentenceCount, readingTime }) => {
   return (
@@ -43,6 +43,8 @@ export const Header = ({ wordCount, sentenceCount, readingTime }) => {
           <Save size={14} />
           <span>已自动保存</span>
         </div>
+        <div className="h-3 w-px bg-gray-200" />
+        <SystemStatus compact />
       </div>
     </header>
   )

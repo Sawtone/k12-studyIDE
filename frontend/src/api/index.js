@@ -9,3 +9,6 @@
 
 // 连接真实后端时使用（需要后端服务运行）
 export * from './sessionApi'
+
+export * from './literatureApi'
+export * from './systemApi'
