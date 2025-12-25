@@ -12,3 +12,4 @@ export * from './sessionApi'
 
 export * from './literatureApi'
 export * from './systemApi'
+export * from './chatApi'

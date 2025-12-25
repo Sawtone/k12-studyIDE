@@ -17,6 +17,9 @@ function App() {
   const [syncing, setSyncing] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
 
+  // 灵感状态 - 按 sessionId 存储
+  const [inspirationMap, setInspirationMap] = useState({})
+
   const { leftWidth, rightWidth, containerRef, handleMouseDown } = useResizable()
 
   // 防抖同步的定时器
@@ -25,6 +28,26 @@ function App() {
   const lastSyncedContentRef = useRef('')
 
   const sessionId = currentSession?.id || currentSession?.session_id
+
+  // 当前会话的灵感数据
+  const currentInspiration = sessionId ? inspirationMap[sessionId] : null
+
+  // 设置当前会话的灵感
+  const setCurrentInspiration = useCallback(
+    (data) => {
+      if (!sessionId) return
+      if (data) {
+        setInspirationMap((prev) => ({ ...prev, [sessionId]: data }))
+      } else {
+        setInspirationMap((prev) => {
+          const next = { ...prev }
+          delete next[sessionId]
+          return next
+        })
+      }
+    },
+    [sessionId]
+  )
 
   const wordCount = calculateWordCount(content)
   const sentenceCount = calculateSentenceCount(content)
@@ -99,14 +122,15 @@ function App() {
         console.log('获取编辑历史失败，使用空内容:', historyErr)
       }
 
-      setContent(sessionContent || DEFAULT_CONTENT)
-      lastSyncedContentRef.current = sessionContent || ''
+      // 新会话（无历史内容）使用空字符串，让编辑器显示欢迎页
+      setContent(sessionContent)
+      lastSyncedContentRef.current = sessionContent
       setLastSaved(detail.updated_at ? new Date(detail.updated_at) : null)
     } catch (err) {
       console.error('加载会话详情失败:', err)
       // 即使加载详情失败，也设置基本信息
       setCurrentSession(session)
-      setContent(DEFAULT_CONTENT)
+      setContent('')
       lastSyncedContentRef.current = ''
     }
   }, [])
@@ -146,6 +170,8 @@ function App() {
           sentenceCount={sentenceCount}
           sessionId={sessionId}
           sessionTitle={currentSession?.title}
+          inspiration={currentInspiration}
+          setInspiration={setCurrentInspiration}
         />
         <ResizeHandle onMouseDown={handleMouseDown('right')} />
         <RightPanel width={rightWidth} sessionId={sessionId} content={content} />
