@@ -6,7 +6,18 @@ import { EditorPanel } from './layouts/EditorPanel'
 import { ResizeHandle } from './components/ResizeHandle'
 import { useResizable } from './hooks/useResizable'
 import { calculateWordCount, calculateSentenceCount, calculateReadingTime } from './utils/textUtils'
-import { getSession, syncEditor, getEditorHistory } from './api'
+import { getSession, syncEditor, getEditorHistory, updateSession } from './api'
+
+// 检测内容是否为纯英语（只包含英文字母、数字、标点和空白）
+const isPureEnglish = (text) => {
+  if (!text || text.trim().length === 0) return false
+  // 移除空白字符后检查
+  const cleaned = text.replace(/\s+/g, '')
+  if (cleaned.length === 0) return false
+  // 只允许英文字母、数字和常见英文标点
+  const englishPattern = /^[a-zA-Z0-9.,!?;:'"()\-\[\]{}@#$%^&*+=<>/\\|`~_]+$/
+  return englishPattern.test(cleaned)
+}
 
 const DEFAULT_CONTENT = '开始写作...'
 
@@ -71,6 +82,22 @@ function App() {
           await syncEditor(sessionId, { content: newContent })
           lastSyncedContentRef.current = newContent
           setLastSaved(new Date())
+
+          // 检测语言并自动更新 mode
+          const currentMode = currentSession?.mode
+          const isEnglish = isPureEnglish(newContent)
+          const targetMode = isEnglish ? 'science' : 'literature'
+          
+          if (currentMode && currentMode !== targetMode) {
+            try {
+              await updateSession(sessionId, { mode: targetMode })
+              setCurrentSession(prev => prev ? { ...prev, mode: targetMode } : prev)
+              // 同步切换编辑器模式
+              setIsIDEMode(isEnglish)
+            } catch (err) {
+              console.error('更新语言模式失败:', err)
+            }
+          }
         } catch (err) {
           console.error('同步失败:', err)
         } finally {
@@ -78,7 +105,7 @@ function App() {
         }
       }, 1500)
     },
-    [sessionId]
+    [sessionId, currentSession?.mode]
   )
 
   // 内容变化时触发同步

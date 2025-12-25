@@ -16,8 +16,8 @@ const USER_ID = 'user-001'
 
 const categories = [
   { id: 'all', label: '全部' },
-  { id: 'literature', label: '文学' },
-  { id: 'science', label: '理科' },
+  { id: 'literature', label: '语文' },
+  { id: 'science', label: '英语' },
 ]
 
 // 格式化时间
@@ -80,7 +80,7 @@ const getModeConfig = (mode) => {
         color: 'text-amber-500',
         bg: 'bg-amber-50',
         border: 'border-amber-100',
-        label: '理科',
+        label: '英语',
       }
     case 'literature':
       return {
@@ -88,7 +88,7 @@ const getModeConfig = (mode) => {
         color: 'text-violet-500',
         bg: 'bg-violet-50',
         border: 'border-violet-100',
-        label: '文学',
+        label: '语文',
       }
     default:
       return {
@@ -120,7 +120,7 @@ const ContextMenu = forwardRef(({ x, y, onAction, currentMode }, ref) => (
       className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600 transition-colors"
     >
       <Tag size={12} />
-      <span>切换为{currentMode === 'literature' ? '理科' : '文学'}</span>
+      <span>切换为{currentMode === 'literature' ? '英语' : '语文'}</span>
     </button>
     <div className="my-1 border-t border-gray-100" />
     <button
