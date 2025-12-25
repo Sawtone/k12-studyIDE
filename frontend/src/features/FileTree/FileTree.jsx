@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, forwardRef } from 'react'
 import {
   FileCode,
   FileType,
-  FileText,
   MoreHorizontal,
   Trash2,
   Pencil,
@@ -13,36 +12,57 @@ import {
 } from 'lucide-react'
 import { useSession } from '../../hooks/useSession'
 
-// TODO: 替换为实际的用户ID获取逻辑
 const USER_ID = 'user-001'
 
 const categories = [
   { id: 'all', label: '全部' },
   { id: 'literature', label: '文学' },
   { id: 'science', label: '理科' },
-  { id: 'active', label: '进行中' },
 ]
 
-const getModeIcon = (mode) => {
-  switch (mode) {
-    case 'science':
-      return { icon: FileCode, color: 'text-orange-500' }
-    case 'literature':
-      return { icon: FileType, color: 'text-indigo-500' }
-    default:
-      return { icon: FileText, color: 'text-emerald-500' }
-  }
+// 格式化时间
+const formatTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now - date
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
-const getModeTag = (mode, status) => {
-  if (status === 'active') return { className: 'bg-green-50 text-green-600', label: '进行中' }
+const getModeConfig = (mode) => {
   switch (mode) {
     case 'science':
-      return { className: 'bg-orange-50 text-orange-600', label: '理科' }
+      return {
+        icon: FileCode,
+        color: 'text-amber-500',
+        bg: 'bg-amber-50',
+        border: 'border-amber-100',
+        label: '理科',
+      }
     case 'literature':
-      return { className: 'bg-indigo-50 text-indigo-600', label: '文学' }
+      return {
+        icon: FileType,
+        color: 'text-violet-500',
+        bg: 'bg-violet-50',
+        border: 'border-violet-100',
+        label: '文学',
+      }
     default:
-      return { className: 'bg-gray-100 text-gray-500', label: '其他' }
+      return {
+        icon: FileType,
+        color: 'text-gray-400',
+        bg: 'bg-gray-50',
+        border: 'border-gray-100',
+        label: '其他',
+      }
   }
 }
 
@@ -50,19 +70,19 @@ const getModeTag = (mode, status) => {
 const ContextMenu = forwardRef(({ x, y, onAction, currentMode }, ref) => (
   <div
     ref={ref}
-    className="fixed bg-white shadow-xl rounded-lg border border-gray-100 py-1 z-50 min-w-[140px]"
+    className="fixed bg-white/95 backdrop-blur-sm shadow-lg rounded-lg border border-gray-200/60 py-1 z-50 min-w-[120px]"
     style={{ left: x, top: y }}
   >
     <button
       onClick={() => onAction('rename')}
-      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600"
+      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600 transition-colors"
     >
       <Pencil size={12} />
       <span>重命名</span>
     </button>
     <button
       onClick={() => onAction('changeMode')}
-      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600"
+      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600 transition-colors"
     >
       <Tag size={12} />
       <span>切换为{currentMode === 'literature' ? '理科' : '文学'}</span>
@@ -70,7 +90,7 @@ const ContextMenu = forwardRef(({ x, y, onAction, currentMode }, ref) => (
     <div className="my-1 border-t border-gray-100" />
     <button
       onClick={() => onAction('delete')}
-      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-red-500"
+      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-red-50 text-red-500 transition-colors"
     >
       <Trash2 size={12} />
       <span>删除</span>
@@ -84,51 +104,108 @@ ContextMenu.displayName = 'ContextMenu'
 const ManageMenu = forwardRef(({ x, y, onAction }, ref) => (
   <div
     ref={ref}
-    className="fixed bg-white shadow-xl rounded-lg border border-gray-100 py-1 z-50 min-w-[120px]"
+    className="fixed bg-white/95 backdrop-blur-sm shadow-lg rounded-lg border border-gray-200/60 py-1 z-50 min-w-[100px]"
     style={{ left: x, top: y }}
   >
     <button
       onClick={() => onAction('refresh')}
-      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600"
+      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600 transition-colors"
     >
       <RefreshCw size={12} />
-      <span>刷新列表</span>
+      <span>刷新</span>
     </button>
   </div>
 ))
 ManageMenu.displayName = 'ManageMenu'
 
-// 重命名输入框
-const RenameInput = ({ value, onConfirm, onCancel }) => {
-  const [inputValue, setInputValue] = useState(value)
+// 会话卡片
+const SessionCard = ({ session, isActive, isRenaming, onSelect, onContext, onRenameConfirm, onRenameCancel }) => {
+  const sessionId = session.id || session.session_id
+  const config = getModeConfig(session.mode)
+  const Icon = config.icon
+  const [renameValue, setRenameValue] = useState(session.title || '未命名')
   const inputRef = useRef(null)
 
   useEffect(() => {
-    inputRef.current?.focus()
-    inputRef.current?.select()
-  }, [])
+    if (isRenaming) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+  }, [isRenaming])
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      onConfirm(inputValue.trim() || value)
-    } else if (e.key === 'Escape') {
-      onCancel()
-    }
+    if (e.key === 'Enter') onRenameConfirm(renameValue.trim() || session.title)
+    else if (e.key === 'Escape') onRenameCancel()
+  }
+
+  // 根据模式获取选中状态的样式
+  const getActiveStyles = () => {
+    if (!isActive) return 'bg-white hover:bg-gray-50/80 border-gray-100 hover:border-gray-200 hover:shadow-sm'
+    if (session.mode === 'science') return 'bg-gradient-to-br from-amber-50 to-white border-amber-200 shadow-sm'
+    return 'bg-gradient-to-br from-violet-50 to-white border-violet-200 shadow-sm'
+  }
+
+  const getIndicatorColor = () => {
+    if (session.mode === 'science') return 'bg-amber-500'
+    return 'bg-violet-500'
   }
 
   return (
-    <div className="flex items-center gap-1 flex-1">
-      <input
-        ref={inputRef}
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => onConfirm(inputValue.trim() || value)}
-        className="flex-1 px-1 py-0.5 text-xs border border-indigo-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-400"
-      />
+    <div
+      onClick={() => !isRenaming && onSelect(session)}
+      onContextMenu={(e) => onContext(e, sessionId, session.mode)}
+      className={`
+        group relative mx-2 mb-2 p-2.5 rounded-xl cursor-pointer
+        transition-all duration-200 ease-out border
+        ${getActiveStyles()}
+      `}
+    >
+      {/* 顶部：图标 + 标题 + Tag */}
+      <div className="flex items-start gap-2">
+        <div className={`p-1.5 rounded-lg ${config.bg} ${config.border} border flex-shrink-0`}>
+          <Icon size={14} className={config.color} />
+        </div>
+        <div className="flex-1 min-w-0">
+          {isRenaming ? (
+            <input
+              ref={inputRef}
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={() => onRenameConfirm(renameValue.trim() || session.title)}
+              className="w-full px-1.5 py-0.5 text-xs font-medium border border-indigo-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+            />
+          ) : (
+            <h4 className={`text-xs font-medium truncate leading-tight ${isActive ? 'text-gray-800' : 'text-gray-700'}`}>
+              {session.title || '未命名'}
+            </h4>
+          )}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${config.bg} ${config.color} font-medium`}>
+              {config.label}
+            </span>
+            <span className="text-[9px] text-gray-400">
+              {formatTime(session.updated_at || session.created_at)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 预览文字 */}
+      {session.preview && (
+        <p className="mt-2 text-[10px] text-gray-400 line-clamp-2 leading-relaxed pl-8">
+          {session.preview}
+        </p>
+      )}
+
+      {/* 选中指示器 */}
+      {isActive && (
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full ${getIndicatorColor()}`} />
+      )}
     </div>
   )
 }
+
 
 export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId }) => {
   const [activeFilter, setActiveFilter] = useState('all')
@@ -140,33 +217,24 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
   const manageMenuRef = useRef(null)
 
   const activeSessionId = externalActiveId || localActiveId
-
   const { sessions, loading, error, fetchSessions, createSession, deleteSession, updateSession } = useSession()
 
-  // 加载会话列表
   useEffect(() => {
     fetchSessions({ user_id: USER_ID })
   }, [fetchSessions])
 
-  // 筛选会话 (排除已删除的)
   const filtered = sessions.filter((s) => {
-    // 首先排除已删除的会话
     if (s.status === 'deleted') return false
-    
     if (activeFilter === 'all') return true
-    if (activeFilter === 'active') return s.status === 'active'
     return s.mode === activeFilter
   })
 
-  // 关闭菜单
   useEffect(() => {
     const close = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      if (menuRef.current && !menuRef.current.contains(e.target))
         setContextMenu({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
-      }
-      if (manageMenuRef.current && !manageMenuRef.current.contains(e.target)) {
+      if (manageMenuRef.current && !manageMenuRef.current.contains(e.target))
         setManageMenu({ visible: false, x: 0, y: 0 })
-      }
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
@@ -184,13 +252,9 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
     setContextMenu({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
   }
 
-
-  // 右键菜单操作
   const handleAction = async (action) => {
-    const targetId = contextMenu.targetId
-    const targetMode = contextMenu.targetMode
+    const { targetId, targetMode } = contextMenu
     setContextMenu({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
-
     if (!targetId) return
 
     switch (action) {
@@ -198,70 +262,55 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
         try {
           await deleteSession(targetId)
           if (activeSessionId === targetId) setLocalActiveId(null)
-          // 刷新列表确保同步
           await fetchSessions({ user_id: USER_ID })
-          console.log('[API] 删除会话成功:', targetId)
         } catch (err) {
-          console.error('[API] 删除会话失败:', err)
+          console.error('删除失败:', err)
         }
         break
-
       case 'rename':
         setRenamingId(targetId)
         break
-
       case 'changeMode':
         try {
-          const newMode = targetMode === 'literature' ? 'science' : 'literature'
-          await updateSession(targetId, { mode: newMode })
-          await fetchSessions({ user_id: USER_ID }) // 刷新列表
-          console.log('[API] 更改模式成功:', targetId, '->', newMode)
+          await updateSession(targetId, { mode: targetMode === 'literature' ? 'science' : 'literature' })
+          await fetchSessions({ user_id: USER_ID })
         } catch (err) {
-          console.error('[API] 更改模式失败:', err)
+          console.error('切换模式失败:', err)
         }
         break
     }
   }
 
-  // 管理菜单操作
   const handleManageAction = async (action) => {
     setManageMenu({ visible: false, x: 0, y: 0 })
-    if (action === 'refresh') {
-      await fetchSessions({ user_id: USER_ID })
-      console.log('[API] 刷新会话列表')
-    }
+    if (action === 'refresh') await fetchSessions({ user_id: USER_ID })
   }
 
-  // 重命名确认
   const handleRenameConfirm = async (newTitle) => {
     const targetId = renamingId
     setRenamingId(null)
     if (!targetId || !newTitle) return
-
     try {
       await updateSession(targetId, { title: newTitle })
       await fetchSessions({ user_id: USER_ID })
-      console.log('[API] 重命名成功:', targetId, '->', newTitle)
     } catch (err) {
-      console.error('[API] 重命名失败:', err)
+      console.error('重命名失败:', err)
     }
   }
 
-  // 创建会话
   const handleCreateSession = async () => {
     try {
       const newSession = await createSession({
         user_id: USER_ID,
-        title: `新会话 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+        title: `新会话`,
         mode: 'literature',
       })
       const newId = newSession.id || newSession.session_id
       setLocalActiveId(newId)
       onSessionSelect?.(newSession)
-      await fetchSessions({ user_id: USER_ID }) // 刷新列表
-      console.log('[API] 创建会话成功:', newId)
+      await fetchSessions({ user_id: USER_ID })
     } catch (err) {
-      console.error('[API] 创建会话失败:', err)
+      console.error('创建失败:', err)
     }
   }
 
@@ -269,28 +318,32 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
     const id = session.id || session.session_id
     setLocalActiveId(id)
     onSessionSelect?.(session)
-    console.log('[API] 选择会话:', id)
   }
 
 
   return (
-    <div className="flex flex-col h-full text-sm">
+    <div className="flex flex-col h-full bg-gray-50/30">
       {/* Header */}
-      <div className="px-3 py-2 flex items-center justify-between">
-        <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Sessions</span>
-        <div className="flex items-center gap-1">
+      <div className="px-3 py-2.5 flex items-center justify-between bg-white border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">会话</span>
+          <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+            {filtered.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handleCreateSession}
             disabled={loading}
-            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
             title="新建会话"
           >
             <Plus size={14} />
           </button>
           <button
             onClick={handleManageClick}
-            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-            title="管理"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            title="更多"
           >
             <MoreHorizontal size={14} />
           </button>
@@ -298,14 +351,14 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
       </div>
 
       {/* Filter Pills */}
-      <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
+      <div className="px-3 py-2 flex gap-1.5 bg-white border-b border-gray-100/50">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveFilter(cat.id)}
-            className={`h-6 px-2 rounded text-[10px] font-medium whitespace-nowrap transition-colors ${
+            className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all duration-200 ${
               activeFilter === cat.id
-                ? 'bg-indigo-100 text-indigo-700'
+                ? 'bg-indigo-500 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
             }`}
           >
@@ -315,57 +368,43 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
       </div>
 
       {/* Session List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto py-2">
         {loading && sessions.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-gray-400">
-            <Loader2 size={16} className="animate-spin mr-2" />
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <Loader2 size={20} className="animate-spin mb-2" />
             <span className="text-xs">加载中...</span>
           </div>
         ) : error ? (
-          <div className="px-3 py-4 text-xs text-red-500">{error}</div>
+          <div className="mx-3 p-3 text-xs text-red-500 bg-red-50 rounded-lg">{error}</div>
         ) : filtered.length === 0 ? (
-          <div className="px-3 py-8 text-xs text-gray-400 text-center">暂无会话，点击 + 创建</div>
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <Plus size={20} className="text-gray-300" />
+            </div>
+            <span className="text-xs">暂无会话</span>
+            <button
+              onClick={handleCreateSession}
+              className="mt-2 text-[10px] text-indigo-500 hover:text-indigo-600 font-medium"
+            >
+              创建第一个会话
+            </button>
+          </div>
         ) : (
-          filtered.map((session) => {
-            const sessionId = session.id || session.session_id
-            const { icon: Icon, color } = getModeIcon(session.mode)
-            const tag = getModeTag(session.mode, session.status)
-            const isActive = activeSessionId === sessionId
-            const isRenaming = renamingId === sessionId
-
-            return (
-              <div
-                key={sessionId}
-                onClick={() => !isRenaming && handleSelectSession(session)}
-                onContextMenu={(e) => handleContext(e, sessionId, session.mode)}
-                className={`h-8 px-3 flex items-center gap-2 cursor-pointer transition-colors ${
-                  isActive ? 'bg-indigo-50 border-r-2 border-indigo-500' : 'hover:bg-gray-100/80'
-                }`}
-              >
-                <Icon size={14} className={color} />
-                {isRenaming ? (
-                  <RenameInput
-                    value={session.title || '未命名会话'}
-                    onConfirm={handleRenameConfirm}
-                    onCancel={() => setRenamingId(null)}
-                  />
-                ) : (
-                  <>
-                    <span
-                      className={`flex-1 truncate ${isActive ? 'text-indigo-700 font-medium' : 'text-gray-700'}`}
-                    >
-                      {session.title || '未命名会话'}
-                    </span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${tag.className}`}>{tag.label}</span>
-                  </>
-                )}
-              </div>
-            )
-          })
+          filtered.map((session) => (
+            <SessionCard
+              key={session.id || session.session_id}
+              session={session}
+              isActive={activeSessionId === (session.id || session.session_id)}
+              isRenaming={renamingId === (session.id || session.session_id)}
+              onSelect={handleSelectSession}
+              onContext={handleContext}
+              onRenameConfirm={handleRenameConfirm}
+              onRenameCancel={() => setRenamingId(null)}
+            />
+          ))
         )}
       </div>
 
-      {/* Context Menu */}
       {contextMenu.visible && (
         <ContextMenu
           ref={menuRef}
@@ -375,8 +414,6 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
           onAction={handleAction}
         />
       )}
-
-      {/* Manage Menu */}
       {manageMenu.visible && (
         <ManageMenu ref={manageMenuRef} x={manageMenu.x} y={manageMenu.y} onAction={handleManageAction} />
       )}
