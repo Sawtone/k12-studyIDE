@@ -160,6 +160,7 @@ function App() {
           width={leftWidth}
           onSessionSelect={handleSessionSelect}
           activeSessionId={sessionId}
+          editorContent={content}
         />
         <ResizeHandle onMouseDown={handleMouseDown('left')} />
         <EditorPanel
