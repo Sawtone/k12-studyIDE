@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, forwardRef } from 'react'
 import {
   FileCode,
   FileType,
-  MoreHorizontal,
   Trash2,
   Pencil,
   Tag,
   Plus,
   Loader2,
   RefreshCw,
+  ChevronLeft
 } from 'lucide-react'
 import { useSession } from '../../hooks/useSession'
 
@@ -135,24 +135,6 @@ const ContextMenu = forwardRef(({ x, y, onAction, currentMode }, ref) => (
 ContextMenu.displayName = 'ContextMenu'
 
 
-// 管理菜单
-const ManageMenu = forwardRef(({ x, y, onAction }, ref) => (
-  <div
-    ref={ref}
-    className="fixed bg-white/95 backdrop-blur-sm shadow-lg rounded-lg border border-gray-200/60 py-1 z-50 min-w-[100px]"
-    style={{ left: x, top: y }}
-  >
-    <button
-      onClick={() => onAction('refresh')}
-      className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 text-gray-600 transition-colors"
-    >
-      <RefreshCw size={12} />
-      <span>刷新</span>
-    </button>
-  </div>
-))
-ManageMenu.displayName = 'ManageMenu'
-
 // 会话卡片
 const SessionCard = ({ session, isActive, isRenaming, onSelect, onContext, onRenameConfirm, onRenameCancel }) => {
   const sessionId = session.id || session.session_id
@@ -242,14 +224,12 @@ const SessionCard = ({ session, isActive, isRenaming, onSelect, onContext, onRen
 }
 
 
-export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId }) => {
+export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId, onCollapse }) => {
   const [activeFilter, setActiveFilter] = useState('all')
   const [localActiveId, setLocalActiveId] = useState(null)
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
-  const [manageMenu, setManageMenu] = useState({ visible: false, x: 0, y: 0 })
   const [renamingId, setRenamingId] = useState(null)
   const menuRef = useRef(null)
-  const manageMenuRef = useRef(null)
 
   const activeSessionId = externalActiveId || localActiveId
   const { sessions, loading, error, fetchSessions, createSession, deleteSession, updateSession } = useSession()
@@ -268,8 +248,6 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
     const close = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target))
         setContextMenu({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
-      if (manageMenuRef.current && !manageMenuRef.current.contains(e.target))
-        setManageMenu({ visible: false, x: 0, y: 0 })
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
@@ -278,13 +256,6 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
   const handleContext = (e, id, mode) => {
     e.preventDefault()
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY, targetId: id, targetMode: mode })
-    setManageMenu({ visible: false, x: 0, y: 0 })
-  }
-
-  const handleManageClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setManageMenu({ visible: !manageMenu.visible, x: rect.left, y: rect.bottom + 4 })
-    setContextMenu({ visible: false, x: 0, y: 0, targetId: null, targetMode: null })
   }
 
   const handleAction = async (action) => {
@@ -314,11 +285,6 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
         }
         break
     }
-  }
-
-  const handleManageAction = async (action) => {
-    setManageMenu({ visible: false, x: 0, y: 0 })
-    if (action === 'refresh') await fetchSessions({ user_id: USER_ID })
   }
 
   const handleRenameConfirm = async (newTitle) => {
@@ -376,12 +342,22 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
             <Plus size={14} />
           </button>
           <button
-            onClick={handleManageClick}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-            title="更多"
+            onClick={() => fetchSessions({ user_id: USER_ID })}
+            disabled={loading}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
+            title="刷新"
           >
-            <MoreHorizontal size={14} />
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
+          {onCollapse && (
+            <button
+              onClick={onCollapse}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              title="收起面板"
+            >
+              <ChevronLeft size={14} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -448,9 +424,6 @@ export const FileTree = ({ onSessionSelect, activeSessionId: externalActiveId })
           currentMode={contextMenu.targetMode}
           onAction={handleAction}
         />
-      )}
-      {manageMenu.visible && (
-        <ManageMenu ref={manageMenuRef} x={manageMenu.x} y={manageMenu.y} onAction={handleManageAction} />
       )}
     </div>
   )

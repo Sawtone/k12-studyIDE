@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 
-export const useResizable = (initialLeftWidth = 280, initialRightWidth = 280) => {
+export const useResizable = (initialLeftWidth = 280, initialRightWidth = 320) => {
   const [leftWidth, setLeftWidth] = useState(initialLeftWidth)
   const [rightWidth, setRightWidth] = useState(initialRightWidth)
   const containerRef = useRef(null)
