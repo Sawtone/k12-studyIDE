@@ -1,0 +1,16 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "bash scripts/railway_init.sh && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info 2>&1"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+
+[env]
+# Railway 会自动注入这些变量，这里只是文档说明
+# DATABASE_URL - 由 PostgreSQL 插件自动提供
+# REDIS_URL - 由 Redis 插件自动提供
+# PORT - Railway 自动分配

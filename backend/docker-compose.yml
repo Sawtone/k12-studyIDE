@@ -1,0 +1,86 @@
+services:
+  # FastAPI应用
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: k12_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://k12user:k12password@postgres:5432/learning_assistant
+      - REDIS_URL=redis://redis:6379/0
+      - QWEN_API_KEY=${QWEN_API_KEY:-sk-0342251b27394172a1ccff2879076981}
+      - QWEN_TEXT_MODEL=qwen3-max
+      - QWEN_OCR_MODEL=qwen-vl-max
+      - QWEN_EMBEDDING_MODEL=text-embedding-v3
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - k12_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: k12_postgres
+    environment:
+      - POSTGRES_DB=learning_assistant
+      - POSTGRES_USER=k12user
+      - POSTGRES_PASSWORD=k12password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - k12_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U k12user -d learning_assistant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: k12_redis
+    command: redis-server --appendonly yes --requirepass ""
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - k12_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  k12_network:
+    driver: bridge
